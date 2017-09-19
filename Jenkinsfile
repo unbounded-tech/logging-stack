@@ -3,12 +3,32 @@ pipeline {
     label "docker"
   }
   stages {
+    stage("setup") {
+      when {
+        branch "master"
+      }
+      steps {
+        slackSend(
+          color: "info",
+          message: "${env.JOB_NAME} started: ${env.RUN_DISPLAY_URL}"
+        )
+        try {
+          sh "docker network create --driver overlay logging"
+        } catch (e) {
+          // network already exists, nothing to see here, move along
+        }
+      }
+    }
     stage("deploy") {
       when {
         branch "master"
       }
       steps {
-        sh "docker stack deploy -c logging.yml logging"
+        withEnv([
+          "LOGGING_DOMAIN=logging.imakethingsfortheinternet.com"
+        ]) {
+          sh "docker stack deploy -c logging.yml logging"
+        }
       }
     }
   }

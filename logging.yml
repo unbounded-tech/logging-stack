@@ -13,7 +13,7 @@ services:
     volumes:
       - es:/usr/share/elasticsearch/data
     networks:
-      - default
+      - logging
     deploy:
       labels:
         - com.df.distribute=true
@@ -33,7 +33,7 @@ services:
   logstash:
     image: docker.elastic.co/logstash/logstash:5.5.2
     networks:
-      - default
+      - logging
     deploy:
       labels:
         - com.df.distribute=true
@@ -56,7 +56,7 @@ services:
   kibana:
     image: docker.elastic.co/kibana/kibana:5.5.2
     networks:
-      - default
+      - logging
       - proxy
     environment:
       - xpack.security.enabled=false
@@ -65,10 +65,10 @@ services:
       labels:
         - com.df.notify=true
         - com.df.distribute=true
-        - com.df.usersPassEncrypted=false
-        - com.df.usersSecret=admin
-        - com.df.servicePath=/app,/elasticsearch,/api,/ui,/bundles,/plugins,/status,/es_admin
         - com.df.port=5601
+        - com.df.serviceDomain=${LOGGING_DOMAIN:-localhost}
+        - com.df.letsencrypt.host=${LOGGING_DOMAIN:-localhost}
+        - com.df.letsencrypt.email=pat@patscott.io
         - com.df.alertName=memlimit
         - com.df.alertIf=@service_mem_limit:0.8
         - com.df.alertFor=30s
@@ -81,7 +81,7 @@ services:
   logspout:
     image: gliderlabs/logspout:v3.2.2
     networks:
-      - default
+      - logging
     environment:
       - SYSLOG_FORMAT=rfc3164
     volumes:
@@ -104,8 +104,9 @@ services:
 networks:
   proxy:
     external: true
-  default:
-    external: false
+
+  logging:
+    external: true
 
 volumes:
   es:
