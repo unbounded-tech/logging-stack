@@ -12,7 +12,14 @@ pipeline {
           color: "info",
           message: "${env.JOB_NAME} started: ${env.RUN_DISPLAY_URL}"
         )
-        sh "docker network create --driver overlay logging"
+        try {
+          sh "docker network create --driver overlay logging"
+        } catch (e) {
+          slackSend(
+            color: "info",
+            message: e.message
+          )
+        }
       }
     }
     stage("deploy") {
