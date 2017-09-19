@@ -16,14 +16,7 @@ pipeline {
         branch "master"
       }
       steps {
-        script {
-          try {
-            sh "docker network create --driver overlay logging"
-          }
-          catch {
-            //
-          }
-        }
+        def out = sh "docker network create --driver overlay logging"
       }
     }
     stage("deploy") {
