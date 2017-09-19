@@ -23,12 +23,11 @@ pipeline {
       when {
         branch "master"
       }
+      environment {
+        LOGGING_DOMAIN = logging.imakethingsfortheinternet.com
+      }
       steps {
-        withEnv([
-          "LOGGING_DOMAIN=logging.imakethingsfortheinternet.com"
-        ]) {
-          sh "docker stack deploy -c logging.yml logging"
-        }
+        sh "docker stack deploy -c logging.yml logging"
       }
     }
   }
