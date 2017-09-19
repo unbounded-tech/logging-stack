@@ -3,16 +3,27 @@ pipeline {
     label "docker"
   }
   stages {
-    stage("setup") {
-      when {
-        branch "master"
-      }
+    stage("notify") {
       steps {
         slackSend(
           color: "info",
           message: "${env.JOB_NAME} started: ${env.RUN_DISPLAY_URL}"
         )
-        networkOutput = sh(command: "docker network create --driver overlay logging", returnStdout:true)
+      }
+    }
+    stage("setup") {
+      when {
+        branch "master"
+      }
+      steps {
+        script {
+          try {
+            sh "docker network create --driver overlay logging"
+          }
+          catch {
+            //
+          }
+        }
       }
     }
     stage("deploy") {
