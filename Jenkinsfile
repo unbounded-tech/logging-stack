@@ -20,7 +20,7 @@ pipeline {
         branch "master"
       }
       environment {
-        LOGGING_DOMAIN = 'logging.imakethingsfortheinternet.com'
+        LOGGING_DOMAIN = 'logs.imakethingsfortheinternet.com'
       }
       steps {
         sh "docker stack deploy -c logging.yml logging"
