@@ -1,6 +1,10 @@
 pipeline {
   agent {
-    label "docker"
+    label "prod"
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '2'))
+    disableConcurrentBuilds()
   }
   stages {
     stage("notify") {
@@ -24,10 +28,16 @@ pipeline {
         branch "master"
       }
       environment {
-        LOGGING_DOMAIN = 'logs.imakethingsfortheinternet.com'
+        LOGGING_DOMAIN = "${env.loggingDomain}"
       }
       steps {
-        sh "docker stack deploy -c logging.yml logging"
+        script {
+          if (env.loggingDomain) {
+            sh "docker stack deploy --prune -c logging.yml logging"
+          } else {
+            sh 'echo "ERROR: env.loggingDomain is required." && exit 1'
+          }
+        }
       }
     }
   }
