@@ -3,13 +3,16 @@ version: "3.3"
 services:
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:5.5.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
     environment:
       xpack.graph.enabled: "false"
       xpack.ml.enabled: "false"
       xpack.monitoring.enabled: "false"
       xpack.security.enabled: "false"
       xpack.watcher.enabled: "false"
+      LOGSPOUT: "ignore"
+      cluster.name: "logging-cluster"
+      ES_JAVA_OPTS: "-Xms2g -Xmx2g"
     volumes:
       - es:/usr/share/elasticsearch/data
     networks:
@@ -20,18 +23,19 @@ services:
         - com.df.notify=true
         - com.df.port=80
         - com.df.alertName=memlimit
-        - com.df.alertIf=@service_mem_limit:0.8
+        - com.df.alertIf=@service_mem_limit:0.85
         - com.df.alertFor=30s
       resources:
         reservations:
-          memory: 3000M
+          memory: 4G
         limits:
-          memory: 3500M
+          memory: 5G
       placement:
-        constraints: [node.role == worker]
+        constraints: 
+          - node.role == worker
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:5.5.2
+    image: docker.elastic.co/logstash/logstash:6.2.2
     networks:
       - logging
     deploy:
@@ -44,9 +48,12 @@ services:
         - com.df.alertFor=30s
       resources:
         reservations:
-          memory: 600M
+          memory: 1G
         limits:
-          memory: 1000M
+          memory: 2G
+      placement:
+        constraints: 
+          - node.role == worker
     configs:
       - logstash.conf
     environment:
@@ -54,21 +61,21 @@ services:
     command: logstash -f /logstash.conf
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:5.5.2
+    image: docker.elastic.co/kibana/kibana:6.2.2
     networks:
       - logging
       - proxy
     environment:
-      - xpack.security.enabled=false
       - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - LOGSPOUT=ignore
     deploy:
       labels:
         - com.df.notify=true
         - com.df.distribute=true
         - com.df.port=5601
         - com.df.serviceDomain=${LOGGING_DOMAIN:-localhost}
-        - com.df.letsencrypt.host=${LOGGING_DOMAIN:-localhost}
-        - com.df.letsencrypt.email=pat@patscott.io
+        - com.df.usersPassEncrypted=true
+        - com.df.usersSecret=admin
         - com.df.alertName=memlimit
         - com.df.alertIf=@service_mem_limit:0.8
         - com.df.alertFor=30s
@@ -77,9 +84,12 @@ services:
           memory: 600M
         limits:
           memory: 1000M
+      placement:
+        constraints: 
+          - node.role == worker
 
   logspout:
-    image: gliderlabs/logspout:v3.2.2
+    image: gliderlabs/logspout:v3.2.4
     networks:
       - logging
     environment:
